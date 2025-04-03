@@ -4,7 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 2, name: "Product 2", price: 19.99 },
         { id: 3, name: "Product 3", price: 59.99 },
     ];
-    const cart = [];
+
+    // Load cart from localStorage
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
     const productList = document.getElementById("product-list");
     const cardItems = document.getElementById("cart-items");
@@ -24,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add product to cart when button is clicked
     productList.addEventListener('click', (e) => {
         if (e.target.tagName === "BUTTON") {
-            const productId = parseInt(e.target.getAttribute('data-id')); // Fixed method call
+            const productId = parseInt(e.target.getAttribute('data-id'));
             const product = products.find(p => p.id === productId);
             addToCart(product);
         }
@@ -33,7 +35,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to add a product to the cart
     function addToCart(product) {
         cart.push(product);
+        updateLocalStorage();
         renderCart();
+    }
+
+    // Function to remove a product from the cart
+    function removeFromCart(productId) {
+        const index = cart.findIndex(item => item.id === productId);
+        if (index !== -1) {
+            cart.splice(index, 1);
+            updateLocalStorage();
+            renderCart();
+        }
     }
 
     // Function to render the cart
@@ -46,9 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
             cart.forEach((item) => {
                 totalPrice += item.price;
                 const cartItem = document.createElement('div');
-                cartItem.innerHTML = `${item.name} - ${item.price.toFixed(2)}`;
+                cartItem.innerHTML = `${item.name} - ${item.price.toFixed(2)} <button class="remove" data-id="${item.id}">Remove</button>`;
                 cardItems.appendChild(cartItem);
             });
+            
             totalPriceDisplay.textContent = `$${totalPrice.toFixed(2)}`;
         } else {
             emptyCartMessage.classList.remove('hidden');
@@ -56,10 +70,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Function to update localStorage with the current cart
+    function updateLocalStorage() {
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }
+
+    // Handle remove button click
+    cardItems.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove')) {
+            const productId = parseInt(e.target.getAttribute('data-id'));
+            removeFromCart(productId);
+        }
+    });
+
     // Handle checkout
     checkOutBtn.addEventListener('click', () => {
         cart.length = 0;  // Empty the cart
+        updateLocalStorage();  // Clear cart in localStorage
         alert("Checkout successfully");
         renderCart();  // Re-render the cart (empty now)
     });
+
+    // Render the cart from localStorage when the page loads
+    renderCart();
 });
